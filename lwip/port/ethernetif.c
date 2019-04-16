@@ -339,15 +339,15 @@ static void ethernetif_phy_init(struct ethernetif *ethernetif,
 
     sysClock = CLOCK_GetFreq(ethernetifConfig->clockName);
 
-    LWIP_PLATFORM_DIAG(("Initializing PHY..."));
+    LWIP_PLATFORM_DIAG(("Initializing PHY...ethernetif->base = 0x%08X", ethernetif->base));
 
     while ((count < ENET_ATONEGOTIATION_TIMEOUT) && (!link))
     {
-        status = PHY_Init(ethernetif->base, ethernetifConfig->phyAddress, sysClock);
+        status = PHY_Init(ENET2, ethernetifConfig->phyAddress, sysClock);
 
         if (kStatus_Success == status)
         {
-            PHY_GetLinkStatus(ethernetif->base, ethernetifConfig->phyAddress, &link);
+            PHY_GetLinkStatus(ENET2, ethernetifConfig->phyAddress, &link);
         }
         else if (kStatus_PHY_AutoNegotiateFail == status)
         {
@@ -364,7 +364,7 @@ static void ethernetif_phy_init(struct ethernetif *ethernetif,
     if (link)
     {
         /* Get the actual PHY link speed. */
-        PHY_GetLinkSpeedDuplex(ethernetif->base, ethernetifConfig->phyAddress, &speed, &duplex);
+        PHY_GetLinkSpeedDuplex(ENET2, ethernetifConfig->phyAddress, &speed, &duplex);
         /* Change the MII speed and duplex for actual link status. */
         config->miiSpeed = (enet_mii_speed_t)speed;
         config->miiDuplex = (enet_mii_duplex_t)duplex;
@@ -1069,6 +1069,7 @@ void ethernetif_input(struct netif *netif)
 
 static ENET_Type *get_enet_base(const uint8_t enetIdx)
 {
+    #if 1
     ENET_Type* enets[] = ENET_BASE_PTRS;
     int arrayIdx;
     int enetCount;
@@ -1086,6 +1087,18 @@ static ENET_Type *get_enet_base(const uint8_t enetIdx)
     }
 
     return NULL;
+    #else
+    ENET_Type* enets[] = ENET_BASE_PTRS;
+    if (enetIdx == 0)
+    {
+        return enets[2];
+    }
+    else if (enetIdx == 1)
+    {
+        return enets[2];
+    }
+    return NULL;
+    #endif
 }
 
 static err_t ethernetif_init(struct netif *netif, struct ethernetif *ethernetif,

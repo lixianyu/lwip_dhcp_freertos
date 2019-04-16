@@ -13,6 +13,7 @@
 
 /*! @brief Defines the timeout macro. */
 #define PHY_TIMEOUT_COUNT 0x3FFFFFFU
+//#define PHY_TIMEOUT_COUNT 0x0FFFFU
 
 /*******************************************************************************
  * Prototypes

@@ -53,7 +53,7 @@
 /* MAC address configuration. */
 #define configMAC_ADDR                     \
     {                                      \
-        0x02, 0x12, 0x13, 0x10, 0x15, 0x11 \
+        0x02, 0x12, 0x13, 0x10, 0x15, 0x15 \
     }
 
 /* Address of PHY interface. */
@@ -82,7 +82,8 @@
  ******************************************************************************/
 void BOARD_InitModuleClock(void)
 {
-    const clock_enet_pll_config_t config = {.enableClkOutput = true, .enableClkOutput25M = false, .loopDivider = 1};
+    clock_enet_pll_config_t config = {.enableClkOutput = true, .enableClkOutput25M = false, .loopDivider = 1};
+    
     CLOCK_InitEnetPll(&config);
 }
 
@@ -177,6 +178,11 @@ static void print_dhcp_state(void *arg)
     vTaskDelete(NULL);
 }
 
+static void tcpip_init_done(void *arg)
+{
+    PRINTF("Enter %s(). arg = 0x%08X\r\n", __func__, arg);
+}
+
 /*!
  * @brief Main function.
  */
@@ -198,20 +204,24 @@ int main(void)
 
     IOMUXC_EnableMode(IOMUXC_GPR, kIOMUXC_GPR_ENET1TxClkOutputDir, true);
 
-    GPIO_PinInit(GPIO1, 9, &gpio_config);
-    GPIO_PinInit(GPIO1, 10, &gpio_config);
+    //GPIO_PinInit(GPIO1, 9, &gpio_config);
+    //GPIO_PinInit(GPIO1, 10, &gpio_config);
+    /* ENET1 RST */
+    GPIO_PinInit(GPIO1, 2, &gpio_config);
     /* pull up the ENET_INT before RESET. */
-    GPIO_WritePinOutput(GPIO1, 10, 1);
-    GPIO_WritePinOutput(GPIO1, 9, 0);
+    //GPIO_WritePinOutput(GPIO1, 10, 1);
+    //GPIO_WritePinOutput(GPIO1, 9, 0);
+    GPIO_WritePinOutput(GPIO1, 2, 0);
     delay();
-    GPIO_WritePinOutput(GPIO1, 9, 1);
+    //GPIO_WritePinOutput(GPIO1, 9, 1);
+    GPIO_WritePinOutput(GPIO1, 2, 1);
 
     IP4_ADDR(&fsl_netif0_ipaddr, 0U, 0U, 0U, 0U);
     IP4_ADDR(&fsl_netif0_netmask, 0U, 0U, 0U, 0U);
     IP4_ADDR(&fsl_netif0_gw, 0U, 0U, 0U, 0U);
 
-    tcpip_init(NULL, NULL);
-
+    tcpip_init(tcpip_init_done, NULL);
+    
     netifapi_netif_add(&fsl_netif0, &fsl_netif0_ipaddr, &fsl_netif0_netmask, &fsl_netif0_gw, &fsl_enet_config0,
                        ethernetif0_init, tcpip_input);
     netifapi_netif_set_default(&fsl_netif0);
